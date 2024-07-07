@@ -2,11 +2,17 @@ pub use ratatui::layout::*;
 pub use ratatui::style::*;
 pub use ratatui::widgets::*;
 pub use ratatui::Frame;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, PartialEq, Eq, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct TodoItem {
     pub content: String,
     pub done: bool,
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct TodoList {
+    pub list: Vec<TodoItem>,
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
@@ -295,9 +301,18 @@ pub fn update(model: &Model, msg: Message) -> Model {
 pub fn view(model: &Model, f: &mut Frame) {
     let mut state = ListState::default().with_selected(model.current_entry);
     let mut item_vec = Vec::new();
+    let mut status_vec = Vec::new();
     for list_item in model.todo_list.iter() {
-        item_vec.push(list_item.content.clone())
+        item_vec.push(list_item.content.clone());
+        if list_item.done {
+            status_vec.push("✓ DONE: ");
+        } else {
+            status_vec.push("TODO: ");
+        }
     }
+    let status_list = List::new(status_vec)
+        .block(Block::bordered().title("Status"))
+        .highlight_style(Style::new().add_modifier(Modifier::REVERSED));
     let list = List::new(item_vec)
         .block(
             Block::bordered().title("Todos").title(
@@ -308,11 +323,21 @@ pub fn view(model: &Model, f: &mut Frame) {
             ),
         )
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
-        .highlight_symbol(">>")
+        .highlight_symbol(">")
         .repeat_highlight_symbol(true);
     f.render_stateful_widget(
+        status_list,
+        Rect::new(0, 0, f.size().width / 6, f.size().height),
+        &mut state,
+    );
+    f.render_stateful_widget(
         list,
-        Rect::new(0, 0, f.size().width, f.size().height),
+        Rect::new(
+            f.size().width / 6,
+            0,
+            f.size().width - (f.size().width / 6),
+            f.size().height,
+        ),
         &mut state,
     );
     match model.interaction_mode {

@@ -8,18 +8,46 @@ use ratatui::{
 pub mod app;
 pub mod tui;
 pub use app::*;
+use std::fs;
+use std::fs::File;
+use std::io::prelude;
 pub use tui::*;
 
 fn main() -> color_eyre::Result<()> {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal()?;
-    let mut model = Model {
-        todo_list: Vec::new(),
-        running_state: RunningState::Running,
-        current_entry: None,
-        entry_text: None,
-        interaction_mode: InteractionMode::Viewing,
-    };
+    let file_path = "todos.json";
+    let mut model: Model;
+    let mut file: File;
+    let mut data: TodoList;
+    match fs::metadata(file_path) {
+        Ok(_) => {
+            {
+                file = File::open(file_path)?;
+                data = TodoList {
+                    list: serde_json::from_reader(file).expect("error while reading file"),
+                };
+                model = Model {
+                    todo_list: data.list,
+                    running_state: RunningState::Running,
+                    current_entry: None,
+                    entry_text: None,
+                    interaction_mode: InteractionMode::Viewing,
+                }
+                //read todo_list in from file.
+            }
+        }
+        Err(_) => {
+            model = Model {
+                todo_list: Vec::new(),
+                running_state: RunningState::Running,
+                current_entry: None,
+                entry_text: None,
+                interaction_mode: InteractionMode::Viewing,
+            };
+            file = File::create(file_path)?;
+        }
+    }
 
     while model.running_state != RunningState::Done {
         //render current view
@@ -33,6 +61,12 @@ fn main() -> color_eyre::Result<()> {
             model = update(&mut model, current_msg.unwrap());
         }
     }
+    //write todo_list to file.
+    let write_list = TodoList {
+        list: model.todo_list,
+    };
+    let write_string = serde_json::to_string(&write_list.list)?;
+    fs::write("todos.json", write_string)?;
     tui::restore_terminal()?;
     Ok(())
 }
