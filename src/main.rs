@@ -92,6 +92,8 @@ fn handle_key(key: event::KeyEvent, model: &Model) -> Option<Message> {
             KeyCode::Char('q') => Some(Message::Quit),
             KeyCode::Char('u') => Some(Message::MarkUndone),
             KeyCode::Char('n') => Some(Message::InitAdd),
+            KeyCode::Char('k') => Some(Message::PreviousItem),
+            KeyCode::Char('j') => Some(Message::NextItem),
             _ => None,
         },
         InteractionMode::Input => match key.code {
