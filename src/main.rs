@@ -1,16 +1,11 @@
 use std::time::Duration;
 
-use ratatui::{
-    crossterm::event::{self, Event, KeyCode},
-    widgets::Paragraph,
-    Frame,
-};
+use ratatui::crossterm::event::{self, Event, KeyCode};
 pub mod app;
 pub mod tui;
 pub use app::*;
 use std::fs;
 use std::fs::File;
-use std::io::prelude;
 pub use tui::*;
 
 fn main() -> color_eyre::Result<()> {
@@ -18,8 +13,8 @@ fn main() -> color_eyre::Result<()> {
     let mut terminal = tui::init_terminal()?;
     let file_path = "todos.json";
     let mut model: Model;
-    let mut file: File;
-    let mut data: TodoList;
+    let file: File;
+    let data: TodoList;
     match fs::metadata(file_path) {
         Ok(_) => {
             {
@@ -45,7 +40,7 @@ fn main() -> color_eyre::Result<()> {
                 entry_text: None,
                 interaction_mode: InteractionMode::Viewing,
             };
-            file = File::create(file_path)?;
+            File::create(file_path)?;
         }
     }
 
